@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include('../partials/head'); %>
+  </head>
+  <body class="container">
+    <header><%- include('../partials/header'); %></header>
+
+    <main>
+      <div class="jumbotron">
+        <h1>To Upload file on mongoDB</h1>
+        <hr />
+        <div>
+          <form action="/files/" method="POST" enctype="multipart/form-data">
+            <div>
+              <label for="name">File Title</label>
+              <input
+                type="text"
+                id="name"
+                placeholder="Name"
+                value=""
+                name="name"
+                required
+              />
+            </div>
+            <div>
+              <label for="desc">File Description</label>
+              <textarea
+                id="desc"
+                name="desc"
+                value=""
+                rows="2"
+                placeholder="Description"
+                required
+              >
+              </textarea>
+            </div>
+            <div>
+              <label for="file">Upload File</label>
+              <input type="file" id="file" name="file" value="" required />
+            </div>
+            <div>
+              <button type="submit">Submit</button>
+            </div>
+          </form>
+        </div>
+
+        <hr />
+
+        <h2>Uploaded files</h2>
+        <div>
+          <% items.forEach(function(file) { %>
+          <div>
+            <div>
+              <h5><%= file.name %></h5>
+              <div>
+                <p><%= file.caption %></p>
+              </div>
+            </div>
+          </div>
+          <% }) %>
+        </div>
+      </div>
+    </main>
+
+    <footer><%- include('../partials/footer'); %></footer>
+  </body>
+</html>
