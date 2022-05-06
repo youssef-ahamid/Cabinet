@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include('../partials/head'); %>
+  </head>
+  <body class="container">
+    <header><%- include('../partials/header'); %></header>
+
+    <main>
+      <div class="jumbotron">
+        <h1>Uploaded Files</h1>
+        <hr />
+        <div class="content">
+          <% items.forEach(function(file) { %>
+          <div>
+            <div>
+              <a href="<%= baseURL + '/files/' + file._id %>" class="m-0 p-0">
+                <h5><%= file.name %></h5>
+              </a>
+              <div>
+                <p><%= file.caption %></p>
+              </div>
+            </div>
+          </div>
+          <% }) %>
+        </div>
+      </div>
+    </main>
+
+    <footer><%- include('../partials/footer'); %></footer>
+  </body>
+</html>

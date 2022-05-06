@@ -8,11 +8,11 @@
 
     <main>
       <div class="jumbotron">
-        <h1>To Upload file on mongoDB</h1>
+        <h1>Upload files like a pro</h1>
         <hr />
         <div>
           <form action="/files/" method="POST" enctype="multipart/form-data">
-            <div>
+            <div class="user-input">
               <label for="name">File Title</label>
               <input
                 type="text"
@@ -23,42 +23,24 @@
                 required
               />
             </div>
-            <div>
-              <label for="desc">File Description</label>
+            <div class="user-input">
+              <label for="caption">File Caption</label>
               <textarea
-                id="desc"
-                name="desc"
+                id="caption"
+                name="caption"
                 value=""
                 rows="2"
-                placeholder="Description"
+                placeholder="Caption"
                 required
               >
               </textarea>
             </div>
-            <div>
+            <div class="user-input">
               <label for="file">Upload File</label>
               <input type="file" id="file" name="file" value="" required />
             </div>
-            <div>
-              <button type="submit">Submit</button>
-            </div>
+            <button type="submit">Submit</button>
           </form>
-        </div>
-
-        <hr />
-
-        <h2>Uploaded files</h2>
-        <div>
-          <% items.forEach(function(file) { %>
-          <div>
-            <div>
-              <h5><%= file.name %></h5>
-              <div>
-                <p><%= file.caption %></p>
-              </div>
-            </div>
-          </div>
-          <% }) %>
         </div>
       </div>
     </main>

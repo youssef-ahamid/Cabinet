@@ -1,66 +1,60 @@
 const express = require("express");
 const fileRouter = express.Router();
 const mongoose = require("mongoose");
+const dotenv = require("dotenv");
+dotenv.config();
 const File = require("../models/File.js");
+const path = require("path");
+const fs = require("fs");
+const mime = require("mime");
+const Binary = require("../models/Binary.js");
 
 module.exports = (upload) => {
-  const url = process.env.MONGODB_CONNECT;
-  const connect = mongoose.connect(url, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  });
-
-  let gfs;
-
-  connect.then("open", () => {
-    // initialize stream
-    gfs = new mongoose.mongo.GridFSBucket(connect.db, {
-      bucketName: "uploads",
-    });
-  });
-
+  mongoose.connect(
+    process.env.MONGODB_CONNECT,
+    { useNewUrlParser: true, useUnifiedTopology: true },
+    (err) => {
+      console.log("mongoDB connected");
+    }
+  );
   /*
     POST: Upload & save a single file to the File collection
 */
   fileRouter.post("/", upload.single("file"), (req, res, next) => {
-    const { caption, contentType, data, user } = req.body;
+    const { caption, data, user, name } = req.body;
+    const { filename } = req.file;
 
-    if (!!req.file)
-      File.findOne({ fileId: req.file.id }) // check for existing files
-        .then((foundFile) => {
-          console.log(foundFile);
-          if (foundFile) {
-            return res.status(200).json({
-              success: false,
-              message: "File already exists",
-            });
-          }
-
-          let newFile = new File({
-            filename: req.file.filename,
-            fileId: req.file.id,
-            meta: data,
-            contentType,
+    if (!!req.file) {
+      const ext = path.extname(filename);
+      const binary = fs.readFileSync(
+        path.join(__dirname, "..", "/public/uploads/" + filename)
+      );
+      let bin = new Binary({ binary });
+      bin
+        .save()
+        .then((buf) => {
+          const file = new File({
+            filename: filename,
+            name,
             caption,
+            url: `/uploads/${filename}`,
+            data: buf._id,
+            contentType: mime.getType(ext),
+            meta: data,
             user,
           });
-          console.log(newFile);
 
-          newFile
+          file
             .save()
-            .then((f) => {
-              console.log(f);
-              f.save().then((file) => {
-                res.status(200).json({
-                  success: true,
-                  file,
-                });
-              });
+            .then((data) => {
+              console.log(data);
+              buf.file = data._id;
+              buf.save().then(() => res.redirect(`/files/${data._id}`));
             })
             .catch((err) => res.status(500).json(err));
         })
         .catch((err) => res.status(500).json(err));
-    else
+    } else
       res.status(400).json({
         success: false,
         message: "No file sent in request",
@@ -70,27 +64,34 @@ module.exports = (upload) => {
   /*
     GET: Return all files
 */
-  fileRouter.get("/", (req, res, next) => {
+  fileRouter.get("/all", (req, res, next) => {
+    const baseURL = (req.secure? "https//": "http://") + req.get('host');
+    
     File.find({})
-      .then((files) => {
-        res.status(200).json({
-          success: true,
-          files,
-        });
+      .then((items) => {
+        res.render("pages/uploadedFiles", { baseURL, items });
       })
       .catch((err) => res.status(500).json(err));
+  });
+
+  /*
+    GET: file upload page
+*/
+  fileRouter.get("/", (req, res, next) => {
+    const baseURL = (req.secure? "https//": "http://") + req.get('host');
+    res.render("pages/fileUpload", { baseURL });  
   });
 
   /*
     GET: Return a single file with a given ID
 */
   fileRouter.get("/:id", (req, res, next) => {
+    const baseURL = (req.secure? "https//": "http://") + req.get('host');
+
     File.findOne({ _id: req.params.id })
+      .populate("data")
       .then((file) => {
-        res.status(200).json({
-          success: true,
-          file,
-        });
+        res.render("pages/viewFile", { file, baseURL });
       })
       .catch((err) => res.status(500).json(err));
   });
@@ -99,28 +100,20 @@ module.exports = (upload) => {
     DEL: Delete a File from the collection
 */
   fileRouter.delete("/:id", (req, res, next) => {
-    File.findOne({ _id: req.params.id })
+    File.findById(req.params.id)
       .then((file) => {
         if (file) {
-          File.deleteOne({ _id: req.params.id })
+          let filePath = path.join(__dirname, "..", "/public/uploads/" + file.filename)
+          fs.unlinkSync(filePath)
+          File.findByIdAndDelete(req.params.id)
             .then(() => {
-              gfs.delete(
-                new mongoose.Types.ObjectId(req.params.id),
-                (err, data) => {
-                  if (err) {
-                    return res.status(404).json({ err: err });
-                  }
-
+              Binary.findByIdAndDelete(file.data).then(() => {
                   res.status(200).json({
                     success: true,
-                    message: `File with ID ${req.params.id} is deleted`,
+                    message: `File with ID ${req.params.id} has been deleted`,
                   });
-                }
-              );
-            })
-            .catch((err) => {
-              return res.status(500).json(err);
-            });
+                }).catch((err) => res.status(500).json(err));
+            }).catch((err) => res.status(500).json(err));
         } else {
           res.status(200).json({
             success: false,
@@ -159,7 +152,7 @@ module.exports = (upload) => {
     GET: Fetches a particular file by filename
 */
   fileRouter.get("/:filename", (req, res, next) => {
-    gfs.find({ filename: req.params.filename }).toArray((err, files) => {
+    File.find({ filename: req.params.filename }).then((files) => {
       if (!files[0] || files.length === 0) {
         return res.status(200).json({
           success: false,

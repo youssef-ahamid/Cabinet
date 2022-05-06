@@ -3,11 +3,11 @@ const Schema = mongoose.Schema;
 
 const FileSchema = new Schema({
   caption: String,
-  filename: {
+  name: {
     required: true,
     type: String,
   },
-  fileId: {
+  filename: {
     required: true,
     type: String,
   },
@@ -15,8 +15,13 @@ const FileSchema = new Schema({
     default: Date.now(),
     type: Date,
   },
-  url: String,
+  data: {
+    type: mongoose.Types.ObjectId,
+    ref: 'Binary',
+    required: true,
+  },
   contentType: String,
+  url: String,
   user: String,
   meta: Object,
 });

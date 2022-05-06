@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include('../partials/head'); %>
+  </head>
+  <body class="container">
+    <header><%- include('../partials/header'); %></header>
+
+    <main>
+      <div class="jumbotron">
+        <div class="flex flex-col justify-center items-center space-y-4">
+        <img src="<%= baseURL + file.url %>" alt="<%= file.name %>" />
+        <h1><%= file.name %></h1>
+        <p class="caption"><%= file.caption %></p>
+        <a href="<%= baseURL + file.url %>">view</a>
+        </div>
+        <hr />
+        <div class="my-4 flex justify-between w-full items-start">
+            <div>
+                <h5>File Data</h5> 
+                <p class="timestamp"><%= file.createdAt %></p>
+                <p class="contentType"><%= file.contentType %></p>
+            </div>
+            <a href="<%= baseURL + file.url %>" download="<%= file.name %>">
+                <button class="bg-pink-500 text-white font-bold rounded-full px-4 py-2">
+                download
+            </button>
+            </a>
+            </div>
+        </div>
+      </div>
+    </main>
+
+    <footer><%- include('../partials/footer'); %></footer>
+  </body>
+</html>
